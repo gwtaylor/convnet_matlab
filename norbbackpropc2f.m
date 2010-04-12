@@ -24,6 +24,11 @@ testbatchdata = single(testbatchdata);
 batchtargets = single(batchtargets);
 testbatchtargets = single(testbatchtargets);
 
+%Uncomment these two lines to only use the first 20 batches of data
+%It runs much faster; useful for debugging
+batchdata = batchdata(:,:,:,1:20);
+testbatchdata = testbatchdata(:,:,:,1:20);
+
 [nr nc numcases numbatches] = size(batchdata);
 
 nummaps1=6;    %number of output feature maps

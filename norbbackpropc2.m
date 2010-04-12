@@ -14,6 +14,11 @@ fprintf('Loading & preprocessing data\n');
 smallnorb_makebatches %preprocess 24,300 training & 24,300 test cases
 smallnorb_reshape %make 4-d data
 
+%Uncomment these two lines to only use the first 20 batches of data
+%It runs much faster; useful for debugging
+%batchdata = batchdata(:,:,:,1:20);
+%testbatchdata = testbatchdata(:,:,:,1:20);
+
 [nr nc numcases numbatches] = size(batchdata);
 
 nummaps1=6;    %number of output feature maps

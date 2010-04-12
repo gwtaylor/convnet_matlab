@@ -78,7 +78,8 @@ dfilters2=zeros(filtersize2,filtersize2,numcases,num_connect*nummaps2);
 dconvcoeff2=zeros(nummaps2,1);
 for jj=1:nummaps2
   %upsample the deltas to make them compatible size
-  up = reshape(kron(delta4r(:,:,:,jj),ones(downsample2)),[outr2 outc2 numcases]);
+  %up = reshape(kron(delta4r(:,:,:,jj),ones(downsample2)),[outr2 outc2 numcases]);
+  up = expand(delta4r(:,:,:,jj),[downsample2 downsample2 1]);
   %for sigmoid nonlinearity
   %delta3(:,:,:,jj)=convcoeff2(jj)*map2(:,:,:,jj).*(1-map2(:,:,:,jj)).*up;
   %for tanh nonlinearity
@@ -137,7 +138,8 @@ dfilters1=zeros(filtersize1,filtersize1,numcases,nummaps1);
 dconvcoeff1=zeros(nummaps1,1);
 for jj=1:nummaps1
   %upsample the deltas to make them compatible size
-  up = reshape(kron(delta2(:,:,:,jj),ones(downsample1)),[outr1 outc1 numcases]);
+  %up = reshape(kron(delta2(:,:,:,jj),ones(downsample1)),[outr1 outc1 numcases]);
+  up = expand(delta2(:,:,:,jj),[downsample1 downsample1 1]);
   %for sigmoid nonlinearity
   %delta3(:,:,:,jj)=convcoeff2(jj)*map2(:,:,:,jj).*(1-map2(:,:,:,jj)).*up;
   %for tanh nonlinearity
