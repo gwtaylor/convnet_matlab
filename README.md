@@ -5,8 +5,10 @@ Simple 2-d convolutional net demo for Matlab.
 
 Author: Graham Taylor
 
-Originally written April 12, 2010
+Originally written April 12, 2010  
 Updated and made public August 31, 2012
+
+## Data
 
 We provide 32x32 downsampled data for the Small NORB dataset.
 
@@ -21,10 +23,14 @@ Original dataset: http://www.cs.nyu.edu/~ylclab/data/norb-v1.0-small/
 
 Note that we only train on image 1 of the stereo pair.
 
+## Setup
+
 You will need to change the path defined at the top of smallnorb_makebatches.m to reflect the actual location of the NORB data.
 
 e.g.
 datasetpath = '~/Dropbox/Public/smallnorb';
+
+## Architecture and Method
 
 The convolutional net in this example has the following architecture:
 
@@ -45,9 +51,11 @@ connected to which maps of Convolutional L2.
 
 We use Carl Rasmussen's "minimize" conjugate gradient code to train the
 network. Therefore, we define a function which returns:
-1) The value (at the current setting of the parameters) of the error 
+
+1. The value (at the current setting of the parameters) of the error 
 function to be minimized; and 
-2) The gradient of the error function with respect to the parameters
+
+2. The gradient of the error function with respect to the parameters
 
 The benefit of this is that we can use Carl's "checkgrad" function to
 check the gradients of the cross-entropy error with respect to the parameters of the convnet using the method of finite differences.
@@ -55,41 +63,36 @@ check the gradients of the cross-entropy error with respect to the parameters of
 Note that for the first 6 epochs, only the topmost (fully-connected)
 weights are updated while the other parameters are held constant.
 
-Running the demo
+## Running the demo
 
 There are three entry points:
 
-1) norbbackpropc2.m : "Main script"; set up data and train network
-
+1. norbbackpropc2.m : "Main script"; set up data and train network
 It has been written to be understandable and therefore is not
-optimized (i.e. it loops over feature maps and cases)
+optimized (i.e. it loops over feature maps and cases)  
 We recommend going through this code first, since everything is explicit
 
-2) norbbackprobc2_fast.m : Fast version of the above; it requires ipp_mt_conv2
-(IPP-optimized 2-D convolution)
-
+2. norbbackprobc2_fast.m : Fast version of the above; it requires ipp_mt_conv2
+(IPP-optimized 2-D convolution)  
 We've linked to a compiled mex for 64-bit linux which should work on
-most modern Linux systems.  
-
-https://dl.dropbox.com/u/13294233/ipp_mt_conv2.mexa64
-
+most modern Linux systems: 
+https://dl.dropbox.com/u/13294233/ipp_mt_conv2.mexa64  
 Otherwise you will need to grab the source
 from Rob Fergus' webpage and attempt to build it for other
-architectures.
-
+architectures:
 http://www.cs.nyu.edu/~fergus/code/ipp_mt_conv2.cpp
 
-3) demo_checkgrad.m : Shows how to use the method of finite
-differences to debug your backprop code
-
+3. demo_checkgrad.m : Shows how to use the method of finite
+differences to debug your backprop code  
 We find checkgrad to be an extremely helpful tool; not just for
 convolutional nets!
 
 The bulk of the code is in:
 
-convnet_forward2.m : Forward pass only (does not include the topmost layer)
-convnet_probsm.m : Topmost (fully-connected) layer
-fn_2layer_convnet_classify.m : Backprop (written for minimize, checkgrad)
+* convnet_forward2.m : Forward pass only (does not include the topmost layer)
+* convnet_probsm.m : Topmost (fully-connected) layer
+* fn_2layer_convnet_classify.m : Backprop (written for minimize, checkgrad)
 
 And the optimized counterparts :
-convnet_forward2_fast.m, fn_2layer_convnet_classify_fast.m
+* convnet_forward2_fast.m 
+* fn_2layer_convnet_classify_fast.m
