@@ -16,7 +16,11 @@
 % External utilities must be on path
 if isempty(strfind(path,'./util'))
     addpath('./util')
-end   
+end
+
+if ~exist('ipp_mt_conv2')
+    error('Can''t find ipp_mt_conv2. Did you compile util/ipp_mt_conv2.cpp or download the mex? (see README)')
+end
 
 preprocessing_type = 1; %use Local Contrast Normalization
 
