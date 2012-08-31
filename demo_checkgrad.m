@@ -1,6 +1,12 @@
 %Demonstrates the use of checkgrad (finite difference method)
 %To ensure that the gradients for a 2-layer convolutional net (2-D) are ok
 %It checks the function fn_2layer_convnet_classify which is used in backprop
+
+% External utilities must be on path
+if ~strfind(path,'./util')
+    addpath('./util')
+end   
+
 filtersize1=3;
 nummaps1=2;
 downsample1=2;

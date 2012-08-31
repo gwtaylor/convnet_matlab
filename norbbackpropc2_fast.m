@@ -13,6 +13,11 @@
 % this means that it will cause problems when you attempt to 'checkgrad'
 % using finite difference method.
 
+% External utilities must be on path
+if ~strfind(path,'./util')
+    addpath('./util')
+end   
+
 preprocessing_type = 1; %use Local Contrast Normalization
 
 maxepoch=200;
