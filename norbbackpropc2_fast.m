@@ -118,7 +118,7 @@ for batch = 1:numbatches
   target = [batchtargets(:,:,batch)];
   
   %forward pass
-  yy = convnet_forward2f(data,filters1,convcoeff1,downsample1,filters2, ...
+  yy = convnet_forward2_fast(data,filters1,convcoeff1,downsample1,filters2, ...
     convcoeff2,downsample2,connections);
   yy = [yy ones(numcases,1,'single')]; %extra dimension (for bias)
   
@@ -148,7 +148,7 @@ for batch = 1:testnumbatches
   target = [testbatchtargets(:,:,batch)];
   
   %forward pass
-  yy = convnet_forward2f(data,filters1,convcoeff1,downsample1,filters2, ...
+  yy = convnet_forward2_fast(data,filters1,convcoeff1,downsample1,filters2, ...
     convcoeff2,downsample2,connections);
   yy = [yy ones(numcases,1,'single')]; %extra dimension (for bias)
   
