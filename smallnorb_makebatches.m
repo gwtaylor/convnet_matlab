@@ -2,8 +2,8 @@
 %preprocessing_type = 0; %Vinod's suggestion
 %preprocessing_type = 1; %diCarlo method (Koray's implementation)
 
-
-datasetpath = '/misc/FergusGroup/gwtaylor/smallnorb';
+% Change this to the actual location of your datafiles
+datasetpath = '~/Dropbox/Public/smallnorb';
 
 load(fullfile(datasetpath,['smallnorb-5x46789x9x18x6x2x32x32-training-' ...
                     'dat-matlab-bicubic.mat']));
@@ -78,11 +78,15 @@ elseif preprocessing_type ==1
   %load('/home/gwtaylor/matlab/koray/randomc101/data/params.mat','ker')
   
   %5x5 Gaussian kernel
-  ker=fspecial('Gaussian',5,1.591);
-  
-  %3x3 Gaussian kernel
-  %ker=fspecial('Gaussian',3,1.591);
-  
+  %ker=fspecial('Gaussian',5,1.591)
+  % If you don't have the Image Proc toolbox, you don't have fspecial
+  ker = [
+    0.0163    0.0296    0.0360    0.0296    0.0163
+    0.0296    0.0535    0.0652    0.0535    0.0296
+    0.0360    0.0652    0.0794    0.0652    0.0360
+    0.0296    0.0535    0.0652    0.0535    0.0296
+    0.0163    0.0296    0.0360    0.0296    0.0163];
+
   numcases = size(traindata,2);
   traindata_pp = zeros((nr-size(ker,1)+1)*(nc-size(ker,2)+1),numcases);
   

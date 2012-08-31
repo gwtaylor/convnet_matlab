@@ -10,8 +10,8 @@ dim = double(img);
 %
 % 1. subtract the mean and divide by the standard deviation
 %
-mn = mean2(dim);
-sd = std2(dim);
+mn = mean(dim(:));
+sd = std(dim(:));
 
 dim = dim - mn;
 dim = dim / sd;
