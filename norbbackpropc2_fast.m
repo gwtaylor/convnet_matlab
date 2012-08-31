@@ -14,7 +14,7 @@
 % using finite difference method.
 
 % External utilities must be on path
-if ~strfind(path,'./util')
+if isempty(strfind(path,'./util'))
     addpath('./util')
 end   
 

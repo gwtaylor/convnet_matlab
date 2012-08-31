@@ -3,7 +3,7 @@
 %It checks the function fn_2layer_convnet_classify which is used in backprop
 
 % External utilities must be on path
-if ~strfind(path,'./util')
+if isempty(strfind(path,'./util'))
     addpath('./util')
 end   
 
