@@ -1,4 +1,5 @@
-% Similar to norbbackpropc1.m but multi-layer architecture:
+% Train two-layer convnet on small norb data.
+% Architecture looks like:
 %   convolutional layer 1
 %   sub-sampling layer 1
 %   convolutional layer 2
@@ -70,7 +71,7 @@ rand('state',0);
 for ii=1:nummaps2
   %slightly ugly because it uses the stats toolbox to sample without
   %replacement
-  connections(ii,:) = randsample(nummaps1,num_connect); 
+  connections(ii,:) = randSample(nummaps1,num_connect); 
 end
 
 %%%% END INITIALIZATION
@@ -176,7 +177,7 @@ end
 
     %perform forward pass to compute input to classifier
     %but do not add extra bias dimension (added inside
-    %CG_SMALLNORB_CLASSIFY_CINIT)
+    %fn_classify)
 
     %forward pass
     yy = convnet_forward2(data,filters1,convcoeff1,downsample1,filters2, ...
@@ -185,7 +186,7 @@ end
     VV = w_class(:);
     Dim = [l7;l8];
     
-    [X, fX] = minimize(VV,'CG_SMALLNORB_CLASSIFY_CINIT',max_iter,Dim,yy,target);
+    [X, fX] = minimize(VV,'fn_classify',max_iter,Dim,yy,target);
     w_class = reshape(X,l7+1,l8);
 
   else
@@ -193,7 +194,7 @@ end
     VV = [filters1(:);convcoeff1(:);filters2(:);convcoeff2(:);w_class(:)];
     Dim = [l1; l2; l3; l4; l5; l6; l7; l8];
 
-    [X, fX] = minimize(VV,'CG_SMALLNORB_CLASSIFY_C2',max_iter,Dim, ...
+    [X, fX] = minimize(VV,'fn_2layer_convnet_classify',max_iter,Dim, ...
       data,target,connections);
     
     filters1 = reshape(X(1:l1*l1*l2),[l1 l1 l2]);

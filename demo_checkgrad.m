@@ -1,6 +1,6 @@
 %Demonstrates the use of checkgrad (finite difference method)
 %To ensure that the gradients for a 2-layer convolutional net (2-D) are ok
-%It checks the function CG_SMALLNORB_CLASSIFY_C2 which is used in backprop
+%It checks the function fn_2layer_convnet_classify which is used in backprop
 filtersize1=3;
 nummaps1=2;
 downsample1=2;
@@ -66,7 +66,7 @@ rand('state',0);
 for ii=1:nummaps2
   %slightly ugly because it uses the stats toolbox to sample without
   %replacement
-  connections(ii,:) = randsample(nummaps1,num_connect); 
+  connections(ii,:) = randSample(nummaps1,num_connect); 
 end
 
 %vectorize the parameters
@@ -84,4 +84,4 @@ Dim(8)=numlabels;
 %First col - grads reported by function (dy)
 %Second col - grads by finite differences (dh)
 %Returned value (ans) - error measure: norm(dh-dy)/norm(dh+dy)
-checkgrad('CG_SMALLNORB_CLASSIFY_C2',VV,1e-8,Dim,XX,targets,connections)
+checkgrad('fn_2layer_convnet_classify',VV,1e-8,Dim,XX,targets,connections)
