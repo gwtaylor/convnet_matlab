@@ -20,16 +20,6 @@ load(fullfile(datasetpath,['smallnorb-5x01235x9x18x6x2x32x32-testing-' ...
 load(fullfile(datasetpath,['smallnorb-5x01235x9x18x6x2x96x96-testing-' ...
                     'cat-matlab.mat']));
 
-% validdata = traindata(:,1,20001:end); %use the last 4300 examples (only
-%                                       %1/2 of stereo pair) as the
-%                                       %validation set
-% 
-% validlabels = trainlabels(20001:end);
-% 
-% traindata = traindata(:,1,1:20000);
-% 
-% trainlabels = trainlabels(1:20000);
-
 traindata = traindata(:,1,:);
 testdata = testdata(:,1,:);
 
@@ -198,11 +188,5 @@ for b=1:numbatches
   testbatchtargets(:,:,b) = ytest(:, randomorder(1+(b-1)*batchsize:b*batchsize))';
 end;
 clear testdata ytest;
-
-
-%%% Reset random seeds 
-rand('state',sum(100*clock)); 
-randn('state',sum(100*clock)); 
-
 
 
