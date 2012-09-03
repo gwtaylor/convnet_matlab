@@ -164,24 +164,17 @@ fprintf(1,['Before epoch %d Train # misclassified: (%d/%d : %6.4f).\n ' ...
 
 %%%%%%%%%%%%%% END OF COMPUTING TEST MISCLASSIFICATION ERROR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+%%%%%%%%%%%%%%% PERFORM CONJUGATE GRADIENT WITH 3 LINESEARCHES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+max_iter=3;
+
 tt=0;
-for batch = 1:numbatches/10
+for batch = 1:numbatches
  fprintf(1,'epoch %d batch %d\r',epoch,batch);
 
-    %%%%%%%%%% COMBINE 10 MINIBATCHES INTO 1 LARGER MINIBATCH %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    tt=tt+1; 
-    data=[];
-    target=[]; 
-    for kk=1:10
-    %since batchdata is 4-d
-    %need to use the general form of cat
-    data = cat(3,data,batchdata(:,:,:,(tt-1)*10+kk));
-    target=[target
-        batchtargets(:,:,(tt-1)*10+kk)];
-    end 
+    data = [batchdata(:,:,:,batch)];
+    target = [batchtargets(:,:,batch)];
 
-    %%%%%%%%%%%%%%% PERFORM CONJUGATE GRADIENT WITH 3 LINESEARCHES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    max_iter=3;
 
     if epoch<6  % First update top-level weights holding other weights fixed. 
 
