@@ -98,19 +98,33 @@ train_err=[];
 
 for epoch = 1:maxepoch
 
+    % To compute error, use 10x size minibatches compared to training
+    % This is just for efficiency
+
 %%%%%%%%%%%%%%%%%%%% COMPUTE TRAINING MISCLASSIFICATION ERROR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 err=0; 
 err_cr=0;
 counter=0;
 
-for batch = 1:numbatches
-    data = [batchdata(:,:,:,batch)];
-    target = [batchtargets(:,:,batch)];
+tt=0;
+for batch = 1:numbatches/10
+
+    %%%%%%%%%% COMBINE 10 MINIBATCHES INTO 1 LARGER MINIBATCH %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    tt=tt+1;
+    data=[];
+    target=[];
+    for kk=1:10
+    %since batchdata is 4-d
+    %need to use the general form of cat
+    data = cat(3,data,batchdata(:,:,:,(tt-1)*10+kk));
+    target=[target
+        batchtargets(:,:,(tt-1)*10+kk)];
+    end
 
     %forward pass
     yy = convnet_forward2(data,filters1,convcoeff1,downsample1,filters2, ...
     convcoeff2,downsample2,connections);
-    yy = [yy ones(numcases,1)]; %extra dimension (for bias)
+    yy = [yy ones(size(yy,1),1)]; %extra dimension (for bias)
 
     %go through classifier
     targetout = convnet_probs(yy,w_class);
@@ -133,14 +147,25 @@ counter=0;
 
 [nr nc testnumcases testnumbatches] = size(testbatchdata);
 
-for batch = 1:testnumbatches
-    data = [testbatchdata(:,:,:,batch)];
-    target = [testbatchtargets(:,:,batch)];
+tt=0;
+for batch = 1:testnumbatches/10
+
+    %%%%%%%%%% COMBINE 10 MINIBATCHES INTO 1 LARGER MINIBATCH %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    tt=tt+1;
+    data=[];
+    target=[];
+    for kk=1:10
+    %since batchdata is 4-d
+    %need to use the general form of cat
+    data = cat(3,data,testbatchdata(:,:,:,(tt-1)*10+kk));
+    target=[target
+        testbatchtargets(:,:,(tt-1)*10+kk)];
+    end
 
     %forward pass
     yy = convnet_forward2(data,filters1,convcoeff1,downsample1,filters2, ...
     convcoeff2,downsample2,connections);
-    yy = [yy ones(numcases,1)]; %extra dimension (for bias)
+    yy = [yy ones(size(yy,1),1)]; %extra dimension (for bias)
 
     %go through classifier
     targetout = convnet_probs(yy,w_class);
@@ -168,7 +193,6 @@ fprintf(1,['Before epoch %d Train # misclassified: (%d/%d : %6.4f).\n ' ...
 %%%%%%%%%%%%%%% PERFORM CONJUGATE GRADIENT WITH 3 LINESEARCHES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 max_iter=3;
 
-tt=0;
 for batch = 1:numbatches
  fprintf(1,'epoch %d batch %d\r',epoch,batch);
 
