@@ -101,7 +101,7 @@ for epoch = 1:maxepoch
     % To compute error, use 10x size minibatches compared to training
     % This is just for efficiency
 
-%%%%%%%%%%%%%%%%%%%% COMPUTE TRAINING MISCLASSIFICATION ERROR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%% COMPUTE TRAINING MISCLASSIFICATION ERROR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 err=0; 
 err_cr=0;
 counter=0;
@@ -194,7 +194,7 @@ fprintf(1,['Before epoch %d Train # misclassified: (%d/%d : %6.4f).\n ' ...
 max_iter=3;
 
 for batch = 1:numbatches
- fprintf(1,'epoch %d batch %d\r',epoch,batch);
+    fprintf(1,'epoch %d batch %d\r',epoch,batch);
 
     data = [batchdata(:,:,:,batch)];
     target = [batchtargets(:,:,batch)];
@@ -202,43 +202,43 @@ for batch = 1:numbatches
 
     if epoch<6  % First update top-level weights holding other weights fixed. 
 
-    %perform forward pass to compute input to classifier
-    %but do not add extra bias dimension (added inside
-    %fn_classify)
+        %perform forward pass to compute input to classifier
+        %but do not add extra bias dimension (added inside
+        %fn_classify)
 
-    %forward pass
-    yy = convnet_forward2(data,filters1,convcoeff1,downsample1,filters2, ...
-      convcoeff2,downsample2,connections);
+        %forward pass
+        yy = convnet_forward2(data,filters1,convcoeff1,downsample1,filters2, ...
+                              convcoeff2,downsample2,connections);
 
-    VV = w_class(:);
-    Dim = [l7;l8];
+        VV = w_class(:);
+        Dim = [l7;l8];
 
-    [X, fX] = minimize(VV,'fn_classify',max_iter,Dim,yy,target);
-    w_class = reshape(X,l7+1,l8);
+        [X, fX] = minimize(VV,'fn_classify',max_iter,Dim,yy,target);
+        w_class = reshape(X,l7+1,l8);
 
     else
 
-    VV = [filters1(:);convcoeff1(:);filters2(:);convcoeff2(:);w_class(:)];
-    Dim = [l1; l2; l3; l4; l5; l6; l7; l8];
+        VV = [filters1(:);convcoeff1(:);filters2(:);convcoeff2(:);w_class(:)];
+        Dim = [l1; l2; l3; l4; l5; l6; l7; l8];
 
-    [X, fX] = minimize(VV,'fn_2layer_convnet_classify',max_iter,Dim, ...
-      data,target,connections);
+        [X, fX] = minimize(VV,'fn_2layer_convnet_classify',max_iter,Dim, ...
+                           data,target,connections);
 
-    filters1 = reshape(X(1:l1*l1*l2),[l1 l1 l2]);
-    xxx = l1*l1*l2;
-    convcoeff1 = reshape(X(xxx+1:xxx+l2),l2,1);
-    xxx = xxx+l2;
-    filters2 = reshape(X(xxx+1:xxx+l4*l4*(num_connect*l5)),[l4 l4 num_connect*l5]);
-    xxx = xxx+l4*l4*(num_connect*l5);
-    convcoeff2 = reshape(X(xxx+1:xxx+l5),l5,1);
-    xxx = xxx+l5;
-    w_class = reshape(X(xxx+1:xxx+(l7+1)*l8),l7+1,l8);
+        filters1 = reshape(X(1:l1*l1*l2),[l1 l1 l2]);
+        xxx = l1*l1*l2;
+        convcoeff1 = reshape(X(xxx+1:xxx+l2),l2,1);
+        xxx = xxx+l2;
+        filters2 = reshape(X(xxx+1:xxx+l4*l4*(num_connect*l5)),[l4 l4 num_connect*l5]);
+        xxx = xxx+l4*l4*(num_connect*l5);
+        convcoeff2 = reshape(X(xxx+1:xxx+l5),l5,1);
+        xxx = xxx+l5;
+        w_class = reshape(X(xxx+1:xxx+(l7+1)*l8),l7+1,l8);
 
 
     end
     %%%%%%%%%%%%%%% END OF CONJUGATE GRADIENT WITH 3 LINESEARCHES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    end
+end
 
     %save smallnorbclassifyconv2_weights filters1 convcoeff1 filters2 convcoeff2 w_class
     %save smallnorbclassifyconv2_error test_err test_crerr train_err train_crerr;
