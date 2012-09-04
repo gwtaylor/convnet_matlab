@@ -26,6 +26,8 @@ preprocessing_type = 1; %use Local Contrast Normalization
 
 maxepoch=200;
 
+reset(RandStream.getDefaultStream);
+
 fprintf('Loading & preprocessing data\n');
 smallnorb_makebatches %preprocess 24,300 training & 24,300 test cases
 smallnorb_reshape %make 4-d data
@@ -112,31 +114,45 @@ train_err=[];
 
 for epoch = 1:maxepoch
 
-%%%%%%%%%%%%%%%%%%%% COMPUTE TRAINING MISCLASSIFICATION ERROR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % To compute error, use 10x size minibatches compared to training
+        % This is just for efficiency
+
+        %%%%%%%%%%%%%%%%%%%% COMPUTE TRAINING MISCLASSIFICATION ERROR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 err=0; 
 err_cr=0;
 counter=0;
 
-for batch = 1:numbatches
-  data = [batchdata(:,:,:,batch)];
-  target = [batchtargets(:,:,batch)];
-  
-  %forward pass
-  yy = convnet_forward2_fast(data,filters1,convcoeff1,downsample1,filters2, ...
-    convcoeff2,downsample2,connections);
-  yy = [yy ones(numcases,1,'single')]; %extra dimension (for bias)
-  
-  %go through classifier
-  targetout = convnet_probs(yy,w_class);
-  
-  [I J]=max(targetout,[],2);
-  [I1 J1]=max(target,[],2);
-  counter=counter+length(find(J==J1));
-  %compute cross-entropy error
-  err_cr = err_cr- sum(sum( target(:,1:end).*log(targetout))) ;
+tt=0;
+for batch = 1:numbatches/10
+    
+    %%%%%%%%%% COMBINE 10 MINIBATCHES INTO 1 LARGER MINIBATCH %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    tt=tt+1;
+    data=[];
+    target=[];
+    for kk=1:10
+    %since batchdata is 4-d
+    %need to use the general form of cat
+    data = cat(3,data,batchdata(:,:,:,(tt-1)*10+kk));
+    target=[target
+        batchtargets(:,:,(tt-1)*10+kk)];
+    end
+    
+    %forward pass
+    yy = convnet_forward2_fast(data,filters1,convcoeff1,downsample1,filters2, ...
+                               convcoeff2,downsample2,connections);
+    yy = [yy ones(size(yy,1),1,'single')]; %extra dimension (for bias)
+    
+    %go through classifier
+    targetout = convnet_probs(yy,w_class);
+    
+    [I J]=max(targetout,[],2);
+    [I1 J1]=max(target,[],2);
+    counter=counter+length(find(J==J1));
+    %compute cross-entropy error
+    err_cr = err_cr- sum(sum( target(:,1:end).*log(targetout))) ;
 end
- train_err(epoch)=(numcases*numbatches-counter);
- train_crerr(epoch)=err_cr/numbatches;
+train_err(epoch)=(numcases*numbatches-counter);
+train_crerr(epoch)=err_cr/numbatches;
 
 %%%%%%%%%%%%%% END OF COMPUTING TRAINING MISCLASSIFICATION ERROR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -147,14 +163,25 @@ counter=0;
 
 [nr nc testnumcases testnumbatches] = size(testbatchdata);
 
-for batch = 1:testnumbatches
-  data = [testbatchdata(:,:,:,batch)];
-  target = [testbatchtargets(:,:,batch)];
+tt=0;
+for batch = 1:testnumbatches/10
+
+    %%%%%%%%%% COMBINE 10 MINIBATCHES INTO 1 LARGER MINIBATCH %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    tt=tt+1;
+    data=[];
+    target=[];
+    for kk=1:10
+    %since batchdata is 4-d
+    %need to use the general form of cat
+    data = cat(3,data,testbatchdata(:,:,:,(tt-1)*10+kk));
+    target=[target
+        testbatchtargets(:,:,(tt-1)*10+kk)];
+    end
   
   %forward pass
   yy = convnet_forward2_fast(data,filters1,convcoeff1,downsample1,filters2, ...
     convcoeff2,downsample2,connections);
-  yy = [yy ones(numcases,1,'single')]; %extra dimension (for bias)
+  yy = [yy ones(size(yy,1),1,'single')]; %extra dimension (for bias)
   
   %go through classifier
   targetout = convnet_probs(yy,w_class);
@@ -165,9 +192,10 @@ for batch = 1:testnumbatches
   %compute cross-entropy error
   err_cr = err_cr- sum(sum( target(:,1:end).*log(targetout))) ;
 end
- test_err(epoch)=(testnumcases*testnumbatches-counter);
- test_crerr(epoch)=err_cr/testnumbatches;
- fprintf(1,'Before epoch %d Train # misclassified: (%d/%d : %6.4f).\n Test # misclassified: (%d/%d : %6.4f) \t \t \n',...
+test_err(epoch)=(testnumcases*testnumbatches-counter);
+test_crerr(epoch)=err_cr/testnumbatches;
+fprintf(1,['Before epoch %d Train # misclassified: (%d/%d : %6.4f).\n ' ...
+           'Test # misclassified: (%d/%d : %6.4f) \t \t \n'],...
             epoch,train_err(epoch),numcases*numbatches, ...
             train_err(epoch)/(numcases*numbatches),test_err(epoch), ...
             testnumcases*testnumbatches, ...
@@ -175,64 +203,53 @@ end
 
 %%%%%%%%%%%%%% END OF COMPUTING TEST MISCLASSIFICATION ERROR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
- tt=0;
- for batch = 1:numbatches/10
- fprintf(1,'epoch %d batch %d\r',epoch,batch);
-
-%%%%%%%%%% COMBINE 10 MINIBATCHES INTO 1 LARGER MINIBATCH %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- tt=tt+1; 
- data=[];
- target=[]; 
- for kk=1:10
-    %since batchdata is 4-d
-    %need to use the general form of cat
-    data = cat(3,data,batchdata(:,:,:,(tt-1)*10+kk));
-    target=[target
-        batchtargets(:,:,(tt-1)*10+kk)];
- end 
-
 %%%%%%%%%%%%%%% PERFORM CONJUGATE GRADIENT WITH 3 LINESEARCHES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  max_iter=3;
+max_iter=3;
 
-  if epoch<6  % First update top-level weights holding other weights fixed. 
+for batch = 1:numbatches
+    fprintf(1,'epoch %d batch %d\r',epoch,batch);
 
-    %perform forward pass to compute input to classifier
-    %but do not add extra bias dimension (added inside
-    %fn_classify)
+    data = [batchdata(:,:,:,batch)];
+    target = [batchtargets(:,:,batch)];
 
-    %forward pass
-    yy = convnet_forward2_fast(data,filters1,convcoeff1,downsample1,filters2, ...
-      convcoeff2,downsample2,connections);
-  
-    VV = w_class(:);
-    Dim = [l7;l8];
-    
-    [X, fX] = minimize(VV,'fn_classify',max_iter,Dim,yy,target);
-    w_class = reshape(X,l7+1,l8);
+    if epoch<6  % First update top-level weights holding other weights fixed. 
 
-  else
-      
-    VV = [filters1(:);convcoeff1(:);filters2(:);convcoeff2(:);w_class(:)];
-    Dim = [l1; l2; l3; l4; l5; l6; l7; l8];
+        %perform forward pass to compute input to classifier
+        %but do not add extra bias dimension (added inside
+        %fn_classify)
 
-    [X, fX] = minimize(VV,'fn_2layer_convnet_classify_fast',max_iter,Dim, ...
-      data,target,connections);
-    
-    filters1 = reshape(X(1:l1*l1*l2),[l1 l1 l2]);
-    xxx = l1*l1*l2;
-    convcoeff1 = reshape(X(xxx+1:xxx+l2),l2,1);
-    xxx = xxx+l2;
-    filters2 = reshape(X(xxx+1:xxx+l4*l4*(num_connect*l5)),[l4 l4 num_connect*l5]);
-    xxx = xxx+l4*l4*(num_connect*l5);
-    convcoeff2 = reshape(X(xxx+1:xxx+l5),l5,1);
-    xxx = xxx+l5;
-    w_class = reshape(X(xxx+1:xxx+(l7+1)*l8),l7+1,l8);
+        %forward pass
+        yy = convnet_forward2_fast(data,filters1,convcoeff1,downsample1,filters2, ...
+                                   convcoeff2,downsample2,connections);
+        
+        VV = w_class(:);
+        Dim = [l7;l8];
+        
+        [X, fX] = minimize(VV,'fn_classify',max_iter,Dim,yy,target);
+        w_class = reshape(X,l7+1,l8);
 
+    else
+        
+        VV = [filters1(:);convcoeff1(:);filters2(:);convcoeff2(:);w_class(:)];
+        Dim = [l1; l2; l3; l4; l5; l6; l7; l8];
 
-  end
-%%%%%%%%%%%%%%% END OF CONJUGATE GRADIENT WITH 3 LINESEARCHES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        [X, fX] = minimize(VV,'fn_2layer_convnet_classify_fast',max_iter,Dim, ...
+                           data,target,connections);
+        
+        filters1 = reshape(X(1:l1*l1*l2),[l1 l1 l2]);
+        xxx = l1*l1*l2;
+        convcoeff1 = reshape(X(xxx+1:xxx+l2),l2,1);
+        xxx = xxx+l2;
+        filters2 = reshape(X(xxx+1:xxx+l4*l4*(num_connect*l5)),[l4 l4 num_connect*l5]);
+        xxx = xxx+l4*l4*(num_connect*l5);
+        convcoeff2 = reshape(X(xxx+1:xxx+l5),l5,1);
+        xxx = xxx+l5;
+        w_class = reshape(X(xxx+1:xxx+(l7+1)*l8),l7+1,l8);
 
- end
+    end
+    %%%%%%%%%%%%%%% END OF CONJUGATE GRADIENT WITH 3 LINESEARCHES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+end
 
  %save smallnorbclassifyconv2f_weights filters1 convcoeff1 filters2 convcoeff2 w_class connections
  %save smallnorbclassifyconv2f_error test_err test_crerr train_err train_crerr;
